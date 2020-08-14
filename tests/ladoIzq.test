@@ -1,0 +1,20 @@
+A = {0}
+B = {0}
+A = {0,1,2,3}
+B = {x : -3 <= x <= 5}
+C = {x : 3 <= x <= 7}
+AB = A | B
+AiB = A & B
+CAiB = C | AiB
+CompA = ~ A
+CompB = ~ B
+AiB = A & B
+CompAiB = ~ AiB
+CompAB = ~ AB
+imprimir AB
+imprimir CAiB
+imprimir AiB
+imprimir CompAiB
+imprimir CompAB
+salir
+
