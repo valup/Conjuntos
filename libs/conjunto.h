@@ -1,5 +1,5 @@
-#ifndef __ELEM_H__
-#define __ELEM_H__
+#ifndef __CONJUNTO_H__
+#define __CONJUNTO_H__
 
 typedef struct _Elemento {
   int* dato;

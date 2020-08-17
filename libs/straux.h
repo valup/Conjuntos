@@ -1,5 +1,5 @@
-#ifndef __STR_H__
-#define __STR_H__
+#ifndef __STRAUX_H__
+#define __STRAUX_H__
 
 int* string_to_int(char* str);
 

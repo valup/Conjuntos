@@ -82,8 +82,15 @@ lo cual se chequea previamente */
 void print_elem(Elemento* elem) {
   assert(elem);
   printf("%d", elem->dato[0]);
-  if (elem->tipo)
-    printf(":%d", elem->dato[1]);
+  if (elem->tipo) {
+    /* por razones esteticas, cuando un intervalo abarca
+    dos valores, se imprimen como separados */
+    if (elem->dato[1] == elem->dato[0] + 1) {
+      printf(",%d", elem->dato[1]);
+    } else {
+      printf(":%d", elem->dato[1]);
+    }
+  }
 }
 
 /* Recibe un conjunto y lo recorre imprimiendo sus elementos

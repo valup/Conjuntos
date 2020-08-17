@@ -131,32 +131,36 @@ Conjunto conj_union(Conjunto c1, Conjunto c2) {
     return conj_copiar(c2);
   /* se copia el primer elemento del primer conjunto al nuevo conjunto
   asumiendo que empieza antes que el segundo */
-  Conjunto nuevo = copiar_elem(c1), aux = nuevo, aux1 = c1->sig, aux2 = c2;
+  Conjunto nuevo = copiar_elem(c1), aux = nuevo;
+  c1 = c1->sig;
 
   while (1) {
     /* se intenta unir el siguiente elemento del segundo conjunto
     al nuevo elemento */
-    if (!unir_elem(aux, aux2)) {
+    if (!unir_elem(aux, c2)) {
+      /* si se habia terminado de recorrer c1
+      se copia el resto de c2 */
+      if (!c1) {
+        aux->sig = conj_copiar(c2);
       /* si no se puede se sigue al siguiente nuevo elemento
       con el conjunto que empieza antes primero */
-      if (aux1->dato[0] < aux2->dato[0]) {
-        aux->sig = conj_union(aux1, aux2);
+      } else if (c1->dato[0] < c2->dato[0]) {
+        aux->sig = conj_union(c1, c2);
       } else {
-        aux->sig = conj_union(aux2, aux1);
+        aux->sig = conj_union(c2, c1);
       }
       return nuevo;
     }
-    /* si se termino de recorrer aux1 se copia
-    el resto del otro conjunto (aux1 es el que siempre guarda el siguiente)*/
-    if (!aux2->sig) {
-      aux->sig = conj_copiar(aux1);
+    /* si no hay mas que unir de c1 se copia el resto de c2 */
+    if (!c1) {
+      aux->sig = conj_copiar(c2->sig);
       return nuevo;
     }
     /* se intercambian los punteros para repetir el proceso
     con el otro conjunto */
-    Conjunto temp = aux1;
-    aux1 = aux2->sig;
-    aux2 = temp;
+    Conjunto temp = c1;
+    c1 = c2->sig;
+    c2 = temp;
   }
 }
 
@@ -207,34 +211,34 @@ void unir(ConjHash* conjs, char* nom, char* com) {
 
 /* Recibe dos conjuntos y devuelve uno nuevo con la interseccion de ambos */
 Conjunto conj_inter(Conjunto c1, Conjunto c2) {
-  Conjunto nuevo = NULL, aux1 = c1, aux2 = c2;
+  Conjunto nuevo = NULL;
 
   /* se intenta intersecar elementos hasta obtener la primera interseccion
   o llegar al final de uno de los conjuntos */
-  while (!(nuevo = intersecar_elems(aux1, aux2))) {
+  while (!(nuevo = intersecar_elems(c1, c2))) {
     /* se recorre el primer conjunto mientras tenga elementos
     y sea menor al comienzo del segundo */
-    for (;aux1 && aux1->dato[aux1->tipo] < aux2->dato[0]; aux1 = aux1->sig);
+    for (;c1 && c1->dato[c1->tipo] < c2->dato[0]; c1 = c1->sig);
     /* si se recorrio todo el conjunto no hay interseccion */
-    if (!aux1)
+    if (!c1)
       return conj_vacio();
     /* se intercambian los punteros para repetir el proceso
     con el otro conjunto */
-    Conjunto temp = aux1;
-    aux1 = aux2;
-    aux2 = temp;
+    Conjunto temp = c1;
+    c1 = c2;
+    c2 = temp;
   }
   /* si se llega al final de alguno de los conjuntos
   no hay mas intersecciones */
-  if (!aux1 || !aux2)
+  if (!c1 || !c2)
     return nuevo;
   /* si el elemento del primer conjunto sigue despues del elemento del segundo
   y el segundo tiene mas elementos, puede haber otra interseccion */
-  if (aux1->dato[aux1->tipo] > aux2->dato[aux2->tipo] && aux2->sig) {
-    nuevo->sig = conj_inter(aux1, aux2->sig);
+  if (c1->dato[c1->tipo] > c2->dato[c2->tipo] && c2->sig) {
+    nuevo->sig = conj_inter(c1, c2->sig);
   /* sino se verifica lo mismo de la otra forma */
-  } else if (aux1->dato[aux1->tipo] <= aux2->dato[aux2->tipo] && aux1->sig) {
-    nuevo->sig = conj_inter(aux2, aux1->sig);
+} else if (c1->dato[c1->tipo] <= c2->dato[c2->tipo] && c1->sig) {
+    nuevo->sig = conj_inter(c2, c1->sig);
   }
   /* si no se hallaron mas intersecciones y retorno vacio
   se elimina esto y se deja en NULL */
@@ -294,58 +298,70 @@ void intersecar(ConjHash* conjs, char* nom, char* com) {
 
 /* Recibe dos conjuntos y devuelve uno nuevo restando el segundo al primero */
 Conjunto conj_resta(Conjunto c1, Conjunto c2) {
-  Conjunto nuevo = NULL, aux, aux1 = c1, aux2 = c2;
+  Conjunto nuevo = NULL, aux;
   /* ini se utiliza para guardar el proximo inicio de un intervalo */
   int ini = INT_MIN;
-  /* como aux1 es el conjunto al que se le resta, se lo recorre completamente */
-  for (;aux1; aux1 = aux1->sig) {
-    /* si no hay elementos que se puedan restar, se copia el resto de aux1 */
-    if (!aux2) {
+  /* como c1 es el conjunto al que se le resta, se lo recorre completamente */
+  for (;c1; c1 = c1->sig) {
+    /* si no hay elementos que se puedan restar, se copia el resto de c1 */
+    if (!c2) {
       if (!nuevo)
-        return conj_copiar(aux1);
-      aux->sig = conj_copiar(aux1);
+        return conj_copiar(c1);
+      aux->sig = conj_copiar(c1);
       return nuevo;
     }
-    /* se recorre aux2 mientras sus elementos
-    terminen antes del comienzo de aux1 */
-    for(;aux2 && aux2->dato[aux2->tipo] < aux1->dato[0]; aux2 = aux2->sig);
-    /* se restan los elementos de aux2 mientras tengan interseccion con aux1
-    es decir que no empiecen despues de que termine
-    pero si la interseccion es total se sigue de largo para ignorar
-    el elemento actual de aux1 ya que se elimina por completo */
-    for (;aux2 && aux2->dato[0] <= aux1->dato[aux1->tipo] && (aux2->dato[0] > aux1->dato[0] || aux2->dato[aux2->tipo] < aux1->dato[aux1->tipo]); aux2 = aux2->sig) {
-      /* si aux1 empieza antes que aux2 ya hay un elemento que crear */
-      if (aux2->dato[0] > aux1->dato[0]) {
-        /* si el proximo inicio es menor al inicio de aux1
-        el nuevo inicio es el de aux1 */
-        if (ini < aux1->dato[0])
-          ini = aux1->dato[0];
-        /* el nuevo elemento abarca desde ini hasta antes de aux2 */
+    /* se recorre c2 mientras sus elementos
+    terminen antes del comienzo de c1 */
+    for(;c2 && c2->dato[c2->tipo] < c1->dato[0]; c2 = c2->sig);
+    /* si el proximo elemento de c2 no tiene interseccion con c1
+    es decir que no empieza despues de que termine
+    se copia el elemento de c1 */
+    if (c2->dato[0] > c1->dato[c1->tipo]) {
+      if (!nuevo) {
+        nuevo = copiar_elem(c1);
+        aux = nuevo;
+      } else {
+        aux->sig = copiar_elem(c1);
+        aux = aux->sig;
+      }
+    } else {
+      /* se restan los elementos de c2 mientras tengan interseccion con c1
+      pero si la interseccion es total se sigue de largo para ignorar
+      el elemento actual de c1 ya que se elimina por completo */
+      for (;c2 && c2->dato[0] <= c1->dato[c1->tipo] && (c2->dato[0] > c1->dato[0] || c2->dato[c2->tipo] < c1->dato[c1->tipo]); c2 = c2->sig) {
+        /* si c1 empieza antes que c2 ya hay un elemento que crear */
+        if (c2->dato[0] > c1->dato[0]) {
+          /* si el proximo inicio es menor al inicio de c1
+          el nuevo inicio es el de c1 */
+          if (ini < c1->dato[0])
+            ini = c1->dato[0];
+          /* el nuevo elemento abarca desde ini hasta antes de c2 */
+          if (!nuevo) {
+            nuevo = crear_elem(ini, c2->dato[0] - 1);
+            aux = nuevo;
+          } else {
+            aux->sig = crear_elem(ini, c2->dato[0] - 1);
+            aux = aux->sig;
+          }
+        }
+        /* en cualquier caso se toma el consecutivo al final de c2
+        como proximo comienzo */
+        ini = c2->dato[c2->tipo] + 1;
+        /* y si c2 cubre el resto de los valores de c1
+        se termina el loop */
+        if (c2->dato[c2->tipo] >= c1->dato[c1->tipo])
+          break;
+      }
+      /* si al terminar el loop ini queda entre los valores de c1
+      significa que hay otro elemento que crear entre ini y el final de c1 */
+      if (ini >= c1->dato[0] && ini <= c1->dato[c1->tipo]) {
         if (!nuevo) {
-          nuevo = crear_elem(ini, aux2->dato[0] - 1);
+          nuevo = crear_elem(ini, c1->dato[c1->tipo]);
           aux = nuevo;
-        } else {
-          aux->sig = crear_elem(ini, aux2->dato[0] - 1);
+        } else if (aux->dato[aux->tipo] < ini){
+          aux->sig = crear_elem(ini, c1->dato[c1->tipo]);
           aux = aux->sig;
         }
-      }
-      /* en cualquier caso se toma el consecutivo al final de aux2
-      como proximo comienzo */
-      ini = aux2->dato[aux2->tipo] + 1;
-      /* y si aux2 cubre el resto de los valores de aux1
-      se termina el loop */
-      if (aux2->dato[aux2->tipo] >= aux1->dato[aux1->tipo])
-        break;
-    }
-    /* si al terminar el loop ini queda entre los valores de aux1
-    significa que hay otro elemento que crear entre ini y el final de aux1 */
-    if (ini >= aux1->dato[0] && ini <= aux1->dato[aux1->tipo]) {
-      if (!nuevo) {
-        nuevo = crear_elem(ini, aux1->dato[aux1->tipo]);
-        aux = nuevo;
-      } else if (aux->dato[aux->tipo] < ini){
-        aux->sig = crear_elem(ini, aux1->dato[aux1->tipo]);
-        aux = aux->sig;
       }
     }
   }

@@ -1,5 +1,5 @@
-#ifndef __CONJ_H__
-#define __CONJ_H__
+#ifndef __OPERACIONES_H__
+#define __OPERACIONES_H__
 
 #include "chash.h"
 

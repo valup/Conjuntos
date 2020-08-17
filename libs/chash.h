@@ -1,10 +1,10 @@
-#ifndef __HASH_H__
-#define __HASH_H__
+#ifndef __CHASH_H__
+#define __CHASH_H__
 
 #include "conjunto.h"
 
 #define LIM 0.7
-#define TAM_INI 211
+#define TAM_INI 503
 
 typedef unsigned (*FuncionHash)(char* clave);
 
